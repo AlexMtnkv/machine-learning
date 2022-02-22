@@ -76,13 +76,14 @@ class DataInit:
         X_test, X_valid, y_test, y_valid = train_test_split(X_test, y_test,
                                                             train_size=0.5,
                                                             test_size=0.5)
-        sc = []
+        sc = {}
         for _ in np.arange(0.05, 1.0, 0.05):
             clf = SGDClassifier(learning_rate="constant", eta0=_).fit(X_train, y_train)
             y_pred = clf.predict(X_valid)
-            sc.append(accuracy_score(y_valid, y_pred))
+            sc[_] = accuracy_score(y_valid, y_pred)
 
-        clf = SGDClassifier(learning_rate="constant", eta0=max(sc)).fit(X_train, y_train)
+        final_eta = sorted(sc, key=sc.__getitem__)[-1]
+        clf = SGDClassifier(learning_rate="constant", eta0=final_eta).fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         print("Model score: ", accuracy_score(y_test, y_pred))
 
