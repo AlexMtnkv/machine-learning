@@ -8,6 +8,8 @@ from tqdm.notebook import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+
 
 
 class DataInit:
@@ -65,10 +67,8 @@ class DataInit:
         self._features = np.array(features)
         self._target = np.array(target)
 
-    def model_training(self):
-        """Обучение модели"""
+    def model_results(self):
         X, y = self._features, self._target
-
         X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                             train_size=0.6,
                                                             test_size=0.4)
@@ -76,18 +76,40 @@ class DataInit:
         X_test, X_valid, y_test, y_valid = train_test_split(X_test, y_test,
                                                             train_size=0.5,
                                                             test_size=0.5)
-        sc = {}
-        for _ in np.arange(0.05, 1.0, 0.05):
-            clf = SGDClassifier(learning_rate="constant", eta0=_).fit(X_train, y_train)
+        # print("Non-normalized model:")
+        # self.model_training(X_t=X_train, y_t=y_train,
+        #                     X_tt=X_test, y_tt=y_test,
+        #                     X_v=X_valid, y_v=y_valid)
+
+        print("Normalized model: ")
+        scaler = StandardScaler()
+        X_train_ss = scaler.fit_transform(X_train)
+        X_val_ss = scaler.fit_transform(X_valid)
+        X_test_ss = scaler.transform(X_test)
+        self.model_training(X_t=X_train_ss, y_t=y_train,
+                            X_tt=X_test_ss, y_tt=y_test,
+                            X_v=X_val_ss, y_v=y_valid)
+
+    @staticmethod
+    def model_training(**kwargs):
+        """Обучение модели"""
+        X_train, y_train = kwargs["X_t"], kwargs["y_t"]
+        X_test, y_test = kwargs["X_tt"], kwargs["y_tt"]
+        X_valid, y_valid = kwargs["X_v"], kwargs["y_v"]
+
+        final_clf = None
+        max_score = 0
+        for eta in np.linspace(0.1, 1, 10):
+            clf = SGDClassifier(alpha=0.01,
+                                learning_rate="optimal",
+                                eta0=eta).fit(X_train, y_train)
             y_pred = clf.predict(X_valid)
-            sc[_] = accuracy_score(y_valid, y_pred)
-
-        final_eta = sorted(sc, key=sc.__getitem__)[-1]
-        clf = SGDClassifier(learning_rate="constant", eta0=final_eta).fit(X_train, y_train)
-        y_pred = clf.predict(X_test)
-        print("Model score: ", accuracy_score(y_test, y_pred))
-
-
+            metric = accuracy_score(y_valid, y_pred)
+            if metric > max_score:
+                max_score = metric
+                final_clf = clf
+        y_pred = final_clf.predict(X_test)
+        print(f"\tModel score: ", accuracy_score(y_test, y_pred))
 
     @property
     def features(self):
