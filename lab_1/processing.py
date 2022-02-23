@@ -11,7 +11,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 
 
-
 class DataInit:
     def __init__(self, student_id="MITENKOV_ALEKSANDR_411",
                  train_directory=pathlib.Path("D:/ML/machine-learning/data/train"),
@@ -76,15 +75,15 @@ class DataInit:
         X_test, X_valid, y_test, y_valid = train_test_split(X_test, y_test,
                                                             train_size=0.5,
                                                             test_size=0.5)
-        # print("Non-normalized model:")
-        # self.model_training(X_t=X_train, y_t=y_train,
-        #                     X_tt=X_test, y_tt=y_test,
-        #                     X_v=X_valid, y_v=y_valid)
+        print("Non-normalized model:")
+        self.model_training(X_t=X_train, y_t=y_train,
+                            X_tt=X_test, y_tt=y_test,
+                            X_v=X_valid, y_v=y_valid)
 
         print("Normalized model: ")
         scaler = StandardScaler()
-        X_train_ss = scaler.fit_transform(X_train)
-        X_val_ss = scaler.fit_transform(X_valid)
+        X_train_ss = scaler.fit_transform(X_train, y_train)
+        X_val_ss = scaler.fit_transform(X_valid, y_valid)
         X_test_ss = scaler.transform(X_test)
         self.model_training(X_t=X_train_ss, y_t=y_train,
                             X_tt=X_test_ss, y_tt=y_test,
@@ -97,11 +96,11 @@ class DataInit:
         X_test, y_test = kwargs["X_tt"], kwargs["y_tt"]
         X_valid, y_valid = kwargs["X_v"], kwargs["y_v"]
 
-        final_clf = None
         max_score = 0
-        for eta in np.linspace(0.1, 1, 10):
+        final_clf = SGDClassifier()
+        for eta in np.linspace(0.1, 6, 20):
             clf = SGDClassifier(alpha=0.01,
-                                learning_rate="optimal",
+                                learning_rate="constant",
                                 eta0=eta).fit(X_train, y_train)
             y_pred = clf.predict(X_valid)
             metric = accuracy_score(y_valid, y_pred)

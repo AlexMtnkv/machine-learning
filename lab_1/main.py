@@ -8,4 +8,4 @@ if __name__ == "__main__":
     di.read_target_variable()
     di.read_data()
     di.model_results()
-    print(t - perf_counter())
+    print("time: ", perf_counter() - t)
